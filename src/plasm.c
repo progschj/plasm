@@ -485,7 +485,7 @@ static int plasm_put_immediate(plasm *as, opspec_t op) {
             return plasm_put_dword(as, op.data.memory.disp.disp32);
         }
     }
-    return 0;
+    return 1;
 }
 
 // extract and write mandatory prefixes included in the opcode table
@@ -545,16 +545,16 @@ int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2,
     optype_t opcode = instructions[idx].opcode;
 
     // write out any mandatory prefixes included in the opcode
-    plasm_put_mandatory_prefixes(as, &opcode);
+    if(!plasm_put_mandatory_prefixes(as, &opcode)) return 0;
 
     // 16bit operand size override
     if(OP_WIDTH(op1.type)==OP_BIT16 || OP_WIDTH(op2.type)==OP_BIT16) {
-        plasm_put_byte(as, 0x66u);
+        if(!plasm_put_byte(as, 0x66u)) return 0;
     }
-    
+
     // address size override prefix (0x67)
     if(OP_TYPE(op1.type)==OP_MEM && op1.data.memory.size_override) {
-        plasm_put_byte(as, op1.data.memory.size_override);
+        if(!plasm_put_byte(as, op1.data.memory.size_override)) return 0;
     }
 
     // build rex prefix
@@ -570,38 +570,40 @@ int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2,
     }
     // rex flags from operands
     rex |= calc_modrm_modrm_rex(op1) | calc_modrm_reg_rex(op2);
-    
+
     // if any of the rex bits have been set, emit the rex prefix
-    if(rex) plasm_put_byte(as, 0x40u | rex);
+    if(rex) {
+        if(!plasm_put_byte(as, 0x40u | rex)) return 0;
+    }
 
     switch(instructions[idx].modrm) {
         // ModRM encoded operand
         case 'r':
-            plasm_put_opcode(as, opcode, 0);
-            plasm_put_byte(as, calc_modrm_modrm(op1) | calc_modrm_reg(op2));
-            plasm_put_sib(as, op1);
+            if(!plasm_put_opcode(as, opcode, 0)) return 0;
+            if(!plasm_put_byte(as, calc_modrm_modrm(op1) | calc_modrm_reg(op2))) return 0;
+            if(!plasm_put_sib(as, op1)) return 0;
             break;
         // ModRM with opcode extension in REG field
         case '0': case '1': case '2': case '3':
         case '4': case '5': case '6': case '7':
-            plasm_put_opcode(as, opcode, 0);
-            plasm_put_byte(as, calc_modrm_modrm(op1) | (instructions[idx].modrm-'0')<<3);
-            plasm_put_sib(as, op1);
+            if(!plasm_put_opcode(as, opcode, 0)) return 0;
+            if(!plasm_put_byte(as, calc_modrm_modrm(op1) | (instructions[idx].modrm-'0')<<3)) return 0;
+            if(!plasm_put_sib(as, op1)) return 0;
             break;
         // additive single byte opcode
         case '+':
-            plasm_put_opcode(as, opcode, REGISTER_INDEX(op1.type)&7u);
+            if(!plasm_put_opcode(as, opcode, REGISTER_INDEX(op1.type)&7u)) return 0;
             break;
         // implicit or no register/memory operands
         case ' ':
-            plasm_put_opcode(as, opcode, 0);
+            if(!plasm_put_opcode(as, opcode, 0)) return 0;
             break;
     }
 
     //write immediate/moffset/reloff values if present
-    plasm_put_immediate(as, op1);
-    plasm_put_immediate(as, op2);
-    plasm_put_immediate(as, op3);
+    if(!plasm_put_immediate(as, op1)) return 0;
+    if(!plasm_put_immediate(as, op2)) return 0;
+    if(!plasm_put_immediate(as, op3)) return 0;
     return 1;
 }
 

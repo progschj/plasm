@@ -273,7 +273,6 @@ typedef enum mnemonic_enum_t {
     MINSS,
     MOVAPD,
     MOVAPS,
-
     MOVDDUP,
     MOVDQA,
     MOVDQU,
@@ -283,7 +282,6 @@ typedef enum mnemonic_enum_t {
     MOVLHPS,
     MOVLPD,
     MOVLPS,
-
     MOVNTDQ,
     MOVNTDQA,
     MOVNTPD,
@@ -295,7 +293,6 @@ typedef enum mnemonic_enum_t {
     MOVSS,
     MOVUPD,
     MOVUPS,
-
     MPSADBW,
     MULPD,
     MULPS,
@@ -303,11 +300,9 @@ typedef enum mnemonic_enum_t {
     MULSS,
     ORPD,
     ORPS,
-
     PABSB,
     PABSW,
     PABSD,
-
     PACKSSDW,
     PACKSSWB,
     PACKUSDW,
@@ -320,7 +315,6 @@ typedef enum mnemonic_enum_t {
     PADDSW,
     PADDUSB,
     PADDUSW,
-
     PALIGNR,
     PAND,
     PANDN,
