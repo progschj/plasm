@@ -1,3 +1,12 @@
+#define EXACT_FLAG (0x01ull<<7ull)
+
+#define EXACT_AL  (OP_REG8  | EXACT_FLAG)
+#define EXACT_AX  (OP_REG16 | EXACT_FLAG)
+#define EXACT_EAX (OP_REG32 | EXACT_FLAG)
+#define EXACT_RAX (OP_REG64 | EXACT_FLAG)
+
+#define EXACT_CL  (OP_REG8  | EXACT_FLAG | 0x01ull<<16ull)
+
 typedef struct opcode_info_t {
     mnemonic_t mnemonic;
     optype_t operand1;
@@ -8,7 +17,7 @@ typedef struct opcode_info_t {
     unsigned char modrm;
 } opcode_info;
 
-opcode_info instructions[] = {
+static opcode_info instructions[] = {
     {ADC, EXACT_AL, OP_IMM8, 0, 0, 0x14, ' '},
     {ADC, EXACT_AX, OP_IMM16, 0, 0, 0x1566, ' '},
     {ADC, EXACT_EAX, OP_IMM32, 0, 0, 0x15, ' '},
@@ -339,8 +348,6 @@ opcode_info instructions[] = {
 
     {INT, OP_IMM8, 0, 0, 0, 0xCD, ' '},
 
-    {INTO, 0, 0, 0, 0, 0xCE, ' '},
-
     {JO, OP_REL32OFF, 0, 0, 0, 0x800F, ' '},
     {JNO, OP_REL32OFF, 0, 0, 0, 0x810F, ' '},
     {JB, OP_REL32OFF, 0, 0, 0, 0x820F, ' '},
@@ -492,10 +499,10 @@ opcode_info instructions[] = {
     {MOVSX, OP_REG16, OP_RM8, 0, 0, 0xBE0F66, 'r'},
     {MOVSX, OP_REG32, OP_RM8, 0, 0, 0xBE0F, 'r'},
     {MOVSX, OP_REG64, OP_RM8, 0, 0, 0xBE0F48, 'r'},
-    //~ {MOVSX, OP_REG32, OP_RM16, 0, 0, 0xBF0F, 'r'},
-    {MOVSX, OP_REG64, OP_RM16, 0, 0, 0xBF0F4866u, 'r'},
+    {MOVSX, OP_REG32, OP_RM16, 0, 0, 0xBF0F, 'r'},
+    {MOVSX, OP_REG64, OP_RM16, 0, 0, 0xBF0F48u, 'r'},
 
-    {MOVSXD, OP_REG64, OP_RM32, 0, 0, 0x63, 'r'},
+    {MOVSXD, OP_REG64, OP_RM32, 0, 0, 0x6348, 'r'},
 
     {MOVZX, OP_REG16, OP_RM8, 0, 0, 0xB60F66, 'r'},
     {MOVZX, OP_REG32, OP_RM8, 0, 0, 0xB60F, 'r'},
@@ -552,7 +559,7 @@ opcode_info instructions[] = {
 
     {POPCNT, OP_REG16, OP_RM16, 0, 0, 0xB80FF366u, 'r'},
     {POPCNT, OP_REG32, OP_RM32, 0, 0, 0xB80FF3u, 'r'},
-    {POPCNT, OP_REG64, OP_RM64, 0, 0, 0xB80FF348u, 'r'},
+    {POPCNT, OP_REG64, OP_RM64, 0, 0, 0xB80F48F3u, 'r'},
 
     {POPF, 0, 0, 0, 0, 0x9D, ' '},
 
@@ -577,104 +584,104 @@ opcode_info instructions[] = {
     {PUSHF, 0, 0, 0, 0, 0x9C, ' '},
 
     {RCL, OP_RM8, 0, 0, 0, 0xD0, '2'},
-    {RCL, OP_RM8, 0, 0, 0, 0xD2, '2'},
+    {RCL, OP_RM8, EXACT_CL, 0, 0, 0xD2, '2'},
     {RCL, OP_RM8, OP_IMM8, 0, 0, 0xC0, '2'},
 
     {RCL, OP_RM16, 0, 0, 0, 0xD166, '2'},
-    {RCL, OP_RM16, 0, 0, 0, 0xD366, '2'},
+    {RCL, OP_RM16, EXACT_CL, 0, 0, 0xD366, '2'},
     {RCL, OP_RM16, OP_IMM8, 0, 0, 0xC166, '2'},
 
     {RCL, OP_RM32, 0, 0, 0, 0xD1, '2'},
-    {RCL, OP_RM32, 0, 0, 0, 0xD3, '2'},
+    {RCL, OP_RM32, EXACT_CL, 0, 0, 0xD3, '2'},
     {RCL, OP_RM32, OP_IMM8, 0, 0, 0xC1, '2'},
 
     {RCL, OP_RM64, 0, 0, 0, 0xD148, '2'},
-    {RCL, OP_RM64, 0, 0, 0, 0xD348, '2'},
+    {RCL, OP_RM64, EXACT_CL, 0, 0, 0xD348, '2'},
     {RCL, OP_RM64, OP_IMM8, 0, 0, 0xC148, '2'},
 
     {RCR, OP_RM8, 0, 0, 0, 0xD0, '3'},
-    {RCR, OP_RM8, 0, 0, 0, 0xD2, '3'},
+    {RCR, OP_RM8, EXACT_CL, 0, 0, 0xD2, '3'},
     {RCR, OP_RM8, OP_IMM8, 0, 0, 0xC0, '3'},
 
     {RCR, OP_RM16, 0, 0, 0, 0xD166, '3'},
-    {RCR, OP_RM16, 0, 0, 0, 0xD366, '3'},
+    {RCR, OP_RM16, EXACT_CL, 0, 0, 0xD366, '3'},
     {RCR, OP_RM16, OP_IMM8, 0, 0, 0xC166, '3'},
 
     {RCR, OP_RM32, 0, 0, 0, 0xD1, '3'},
-    {RCR, OP_RM32, 0, 0, 0, 0xD3, '3'},
+    {RCR, OP_RM32, EXACT_CL, 0, 0, 0xD3, '3'},
     {RCR, OP_RM32, OP_IMM8, 0, 0, 0xC1, '3'},
 
     {RCR, OP_RM64, 0, 0, 0, 0xD148, '3'},
-    {RCR, OP_RM64, 0, 0, 0, 0xD348, '3'},
+    {RCR, OP_RM64, EXACT_CL, 0, 0, 0xD348, '3'},
     {RCR, OP_RM64, OP_IMM8, 0, 0, 0xC148, '3'},
 
     {RET, OP_IMM16, 0, 0, 0, 0xC2, ' '},
     {RET, 0, 0, 0, 0, 0xC3, ' '},
 
     {ROL, OP_RM8, 0, 0, 0, 0xD0, '0'},
-    {ROL, OP_RM8, 0, 0, 0, 0xD2, '0'},
+    {ROL, OP_RM8, EXACT_CL, 0, 0, 0xD2, '0'},
     {ROL, OP_RM8, OP_IMM8, 0, 0, 0xC0, '0'},
 
     {ROL, OP_RM16, 0, 0, 0, 0xD166, '0'},
-    {ROL, OP_RM16, 0, 0, 0, 0xD366, '0'},
+    {ROL, OP_RM16, EXACT_CL, 0, 0, 0xD366, '0'},
     {ROL, OP_RM16, OP_IMM8, 0, 0, 0xC166, '0'},
 
     {ROL, OP_RM32, 0, 0, 0, 0xD1, '0'},
-    {ROL, OP_RM32, 0, 0, 0, 0xD3, '0'},
+    {ROL, OP_RM32, EXACT_CL, 0, 0, 0xD3, '0'},
     {ROL, OP_RM32, OP_IMM8, 0, 0, 0xC1, '0'},
 
     {ROL, OP_RM64, 0, 0, 0, 0xD148, '0'},
-    {ROL, OP_RM64, 0, 0, 0, 0xD348, '0'},
+    {ROL, OP_RM64, EXACT_CL, 0, 0, 0xD348, '0'},
     {ROL, OP_RM64, OP_IMM8, 0, 0, 0xC148, '0'},
 
     {ROR, OP_RM8, 0, 0, 0, 0xD0, '1'},
-    {ROR, OP_RM8, 0, 0, 0, 0xD2, '1'},
+    {ROR, OP_RM8, EXACT_CL, 0, 0, 0xD2, '1'},
     {ROR, OP_RM8, OP_IMM8, 0, 0, 0xC0, '1'},
 
     {ROR, OP_RM16, 0, 0, 0, 0xD166, '1'},
-    {ROR, OP_RM16, 0, 0, 0, 0xD366, '1'},
+    {ROR, OP_RM16, EXACT_CL, 0, 0, 0xD366, '1'},
     {ROR, OP_RM16, OP_IMM8, 0, 0, 0xC166, '1'},
 
     {ROR, OP_RM32, 0, 0, 0, 0xD1, '1'},
-    {ROR, OP_RM32, 0, 0, 0, 0xD3, '1'},
+    {ROR, OP_RM32, EXACT_CL, 0, 0, 0xD3, '1'},
     {ROR, OP_RM32, OP_IMM8, 0, 0, 0xC1, '1'},
 
     {ROR, OP_RM64, 0, 0, 0, 0xD148, '1'},
-    {ROR, OP_RM64, 0, 0, 0, 0xD348, '1'},
+    {ROR, OP_RM64, EXACT_CL, 0, 0, 0xD348, '1'},
     {ROR, OP_RM64, OP_IMM8, 0, 0, 0xC148, '1'},
 
     {SAHF, 0, 0, 0, 0, 0x9E, ' '},
 
     {SHL, OP_RM8, 0, 0, 0, 0xD0, '4'},
-    {SHL, OP_RM8, 0, 0, 0, 0xD2, '4'},
+    {SHL, OP_RM8, EXACT_CL, 0, 0, 0xD2, '4'},
     {SHL, OP_RM8, OP_IMM8, 0, 0, 0xC0, '4'},
 
     {SHL, OP_RM16, 0, 0, 0, 0xD166, '4'},
-    {SHL, OP_RM16, 0, 0, 0, 0xD366, '4'},
+    {SHL, OP_RM16, EXACT_CL, 0, 0, 0xD366, '4'},
     {SHL, OP_RM16, OP_IMM8, 0, 0, 0xC166, '4'},
 
     {SHL, OP_RM32, 0, 0, 0, 0xD1, '4'},
-    {SHL, OP_RM32, 0, 0, 0, 0xD3, '4'},
+    {SHL, OP_RM32, EXACT_CL, 0, 0, 0xD3, '4'},
     {SHL, OP_RM32, OP_IMM8, 0, 0, 0xC1, '4'},
 
     {SHL, OP_RM64, 0, 0, 0, 0xD148, '4'},
-    {SHL, OP_RM64, 0, 0, 0, 0xD348, '4'},
+    {SHL, OP_RM64, EXACT_CL, 0, 0, 0xD348, '4'},
     {SHL, OP_RM64, OP_IMM8, 0, 0, 0xC148, '4'},
 
     {SAR, OP_RM8, 0, 0, 0, 0xD0, '7'},
-    {SAR, OP_RM8, 0, 0, 0, 0xD2, '7'},
+    {SAR, OP_RM8, EXACT_CL, 0, 0, 0xD2, '7'},
     {SAR, OP_RM8, OP_IMM8, 0, 0, 0xC0, '7'},
 
     {SAR, OP_RM16, 0, 0, 0, 0xD166, '7'},
-    {SAR, OP_RM16, 0, 0, 0, 0xD366, '7'},
+    {SAR, OP_RM16, EXACT_CL, 0, 0, 0xD366, '7'},
     {SAR, OP_RM16, OP_IMM8, 0, 0, 0xC166, '7'},
 
     {SAR, OP_RM32, 0, 0, 0, 0xD1, '7'},
-    {SAR, OP_RM32, 0, 0, 0, 0xD3, '7'},
+    {SAR, OP_RM32, EXACT_CL, 0, 0, 0xD3, '7'},
     {SAR, OP_RM32, OP_IMM8, 0, 0, 0xC1, '7'},
 
     {SAR, OP_RM64, 0, 0, 0, 0xD148, '7'},
-    {SAR, OP_RM64, 0, 0, 0, 0xD348, '7'},
+    {SAR, OP_RM64, EXACT_CL, 0, 0, 0xD348, '7'},
     {SAR, OP_RM64, OP_IMM8, 0, 0, 0xC148, '7'},
 
     {SBB, EXACT_AL, OP_IMM8, 0, 0, 0x1C, ' '},
@@ -749,19 +756,19 @@ opcode_info instructions[] = {
     {SHLD, OP_RM64, OP_REG64, 0, 0, 0xA50F48, 'r'},
 
     {SHR, OP_RM8, 0, 0, 0, 0xD0, '5'},
-    {SHR, OP_RM8, 0, 0, 0, 0xD2, '5'},
+    {SHR, OP_RM8, EXACT_CL, 0, 0, 0xD2, '5'},
     {SHR, OP_RM8, OP_IMM8, 0, 0, 0xC0, '5'},
 
     {SHR, OP_RM16, 0, 0, 0, 0xD166, '5'},
-    {SHR, OP_RM16, 0, 0, 0, 0xD366, '5'},
+    {SHR, OP_RM16, EXACT_CL, 0, 0, 0xD366, '5'},
     {SHR, OP_RM16, OP_IMM8, 0, 0, 0xC166, '5'},
 
     {SHR, OP_RM32, 0, 0, 0, 0xD1, '5'},
-    {SHR, OP_RM32, 0, 0, 0, 0xD3, '5'},
+    {SHR, OP_RM32, EXACT_CL, 0, 0, 0xD3, '5'},
     {SHR, OP_RM32, OP_IMM8, 0, 0, 0xC1, '5'},
 
     {SHR, OP_RM64, 0, 0, 0, 0xD148, '5'},
-    {SHR, OP_RM64, 0, 0, 0, 0xD348, '5'},
+    {SHR, OP_RM64, EXACT_CL, 0, 0, 0xD348, '5'},
     {SHR, OP_RM64, OP_IMM8, 0, 0, 0xC148, '5'},
 
     {SHRD, OP_RM16, OP_REG16, OP_IMM8, 0, 0xAC0F66, 'r'},
@@ -822,7 +829,7 @@ opcode_info instructions[] = {
 
     {TZCNT, OP_REG16, OP_RM16, 0, 0, 0xBC0FF366, 'r'},
     {TZCNT, OP_REG32, OP_RM32, 0, 0, 0xBC0FF3, 'r'},
-    {TZCNT, OP_REG64, OP_RM64, 0, 0, 0xBC0FF348, 'r'},
+    {TZCNT, OP_REG64, OP_RM64, 0, 0, 0xBC0F48F3, 'r'},
 
     {XADD, OP_RM8, OP_REG8, 0, 0, 0xC00F, 'r'},
     {XADD, OP_RM16, OP_REG16, 0, 0, 0xC10F66, 'r'},
@@ -947,7 +954,7 @@ opcode_info instructions[] = {
 
     {INSERTPS, OP_XMM0, OP_RM128, OP_IMM8, 0, 0x213A0F66u, 'r'},
 
-    {INSERTQ, OP_XMM0, OP_XMM0, OP_IMM8, 0, 0x780FF2, 'r'},
+    {INSERTQ, OP_XMM0, OP_XMM0, OP_IMM8, OP_IMM8, 0x780FF2, 'r'},
     {INSERTQ, OP_XMM0, OP_XMM0, 0, 0, 0x790FF2, 'r'},
 
     {LDDQU, OP_XMM0, OP_RM128, 0, 0, 0xF00FF2, 'r'},
@@ -977,13 +984,13 @@ opcode_info instructions[] = {
     {MOVHLPS, OP_XMM0, OP_XMM0, 0, 0, 0x120F, 'r'},
     {MOVHPD, OP_XMM0, OP_MEM64, 0, 0, 0x160F66u, 'r'},
     {MOVHPD, OP_MEM64, OP_XMM0, 0, 0, 0x170F66u, 'r'},
-    {MOVHPS, OP_XMM0, OP_MEM64, 0, 0, 0x160F48, 'r'},
-    {MOVHPS, OP_MEM64, OP_XMM0, 0, 0, 0x170F48, 'r'},
+    {MOVHPS, OP_XMM0, OP_MEM64, 0, 0, 0x160F, 'r'},
+    {MOVHPS, OP_MEM64, OP_XMM0, 0, 0, 0x170F, 'r'},
     {MOVLHPS, OP_XMM0, OP_XMM0, 0, 0, 0x160F, 'r'},
     {MOVLPD, OP_XMM0, OP_MEM64, 0, 0, 0x120F66u, 'r'},
     {MOVLPD, OP_MEM64, OP_XMM0, 0, 0, 0x130F66u, 'r'},
-    {MOVLPS, OP_XMM0, OP_MEM64, 0, 0, 0x120F48, 'r'},
-    {MOVLPS, OP_MEM64, OP_XMM0, 0, 0, 0x130F48, 'r'},
+    {MOVLPS, OP_XMM0, OP_MEM64, 0, 0, 0x120F, 'r'},
+    {MOVLPS, OP_MEM64, OP_XMM0, 0, 0, 0x130F, 'r'},
 
     {MOVNTDQ, OP_MEM128, OP_XMM0, 0, 0, 0xE70F66, 'r'},
     {MOVNTDQA, OP_MEM128, OP_XMM0, 0, 0, 0x2A380F66u, 'r'},
@@ -1083,7 +1090,7 @@ opcode_info instructions[] = {
     {PMAXSW, OP_XMM0, OP_RM128, 0, 0, 0xEE0F66u, 'r'},
     {PMAXSUB, OP_XMM0, OP_RM128, 0, 0, 0xDE0F66u, 'r'},
     {PMAXSUD, OP_XMM0, OP_RM128, 0, 0, 0x3F380F66u, 'r'},
-    {PMAXSUW, OP_XMM0, OP_RM128, 0, 0, 0x3E0F66u, 'r'},
+    {PMAXSUW, OP_XMM0, OP_RM128, 0, 0, 0x3E380F66u, 'r'},
 
     {PMINSB, OP_XMM0, OP_RM128, 0, 0, 0x38380F66u, 'r'},
     {PMINSD, OP_XMM0, OP_RM128, 0, 0, 0x39380F66u, 'r'},

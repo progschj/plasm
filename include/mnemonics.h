@@ -70,7 +70,6 @@ typedef enum mnemonic_enum_t {
     IMUL,
     INC,
     INT,
-    INTO,
     JO,
     JNO,
     JB,

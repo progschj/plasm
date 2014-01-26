@@ -81,14 +81,6 @@ opspec_t REGISTER_OP(optype_t type) {
     return result;
 }
 
-// require exact register match
-#define EXACT_FLAG (0x01ull<<7ull)
-
-#define EXACT_AL  (OP_REG8  | EXACT_FLAG)
-#define EXACT_AX  (OP_REG16 | EXACT_FLAG)
-#define EXACT_EAX (OP_REG32 | EXACT_FLAG)
-#define EXACT_RAX (OP_REG64 | EXACT_FLAG)
-
 #define OP_TYPE(op) (op & 7ull)
 #define OP_WIDTH(op) (op & (7ull<<3ull))
 #define OP_TYPE_WIDTH(op) (op & 63ull)
@@ -158,6 +150,7 @@ opspec_t MEM(optype_t type, opspec_t reg, int32_t disp) {
 opspec_t DISP(optype_t type, int32_t disp) {
     opspec_t result;
     result.type = type;
+    result.data.memory.size_override = 0;
     result.data.memory.rex = 0;
     result.data.memory.modrm = 4u;
     result.data.memory.sib = 4u<<3u | 5u;
@@ -170,6 +163,7 @@ opspec_t DISP(optype_t type, int32_t disp) {
 opspec_t DISP_RIP(optype_t type, int32_t disp) {
     opspec_t result;
     result.type = type;
+    result.data.memory.size_override = 0;
     result.data.memory.rex = 0;
     result.data.memory.modrm = 5u;
     result.data.memory.sib = 0;
@@ -523,6 +517,11 @@ static int plasm_put_opcode(plasm *as, optype_t opcode, optype_t addition) {
             opcode>>=8u;
         }
     }
+    // some opcodes seem to be multibyte despite escape bytes?
+    while(opcode > 0xFFu) {
+        if(!plasm_put_byte(as, opcode)) return 0;
+        opcode>>=8u;
+    }
     // actual opcode
     if(!plasm_put_byte(as, opcode+addition)) return 0;
     return 1;
@@ -565,6 +564,7 @@ int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2,
     rex |= calc_modrm_modrm_rex(op1) | calc_modrm_reg_rex(op2);
 
     // if any of the rex bits have been set, emit the rex prefix
+
     if(rex) {
         if(!plasm_put_byte(as, 0x40u | rex)) return 0;
     }
@@ -597,6 +597,7 @@ int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2,
     if(!plasm_put_immediate(as, op1)) return 0;
     if(!plasm_put_immediate(as, op2)) return 0;
     if(!plasm_put_immediate(as, op3)) return 0;
+    if(!plasm_put_immediate(as, op4)) return 0;
     return 1;
 }
 
