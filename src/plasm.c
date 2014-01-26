@@ -431,13 +431,14 @@ static void prepare_instructions() {
 
 // find a instruction fitting the mnemonic and operand combination
 // return -1 in case no instruction is found.
-static int find_instruction(mnemonic_t mnemonic, opspec_t op1, opspec_t op2, opspec_t op3) {
+static int find_instruction(mnemonic_t mnemonic, opspec_t op1, opspec_t op2, opspec_t op3, opspec_t op4) {
     for(int i = instruction_support[mnemonic];instructions[i].mnemonic == mnemonic;++i) {
         if(
             instructions[i].mnemonic == mnemonic &&
             operand_match(instructions[i].operand1, op1.type) &&
             operand_match(instructions[i].operand2, op2.type) &&
-            operand_match(instructions[i].operand3, op3.type)
+            operand_match(instructions[i].operand3, op3.type) &&
+            operand_match(instructions[i].operand4, op4.type)
         ) {
             return i;
         }
@@ -527,8 +528,8 @@ static int plasm_put_opcode(plasm *as, optype_t opcode, optype_t addition) {
     return 1;
 }
 
-int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2, opspec_t op3, ...) {
-    int idx = find_instruction(mnemonic, op1, op2, op3);
+int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2, opspec_t op3, opspec_t op4, ...) {
+    int idx = find_instruction(mnemonic, op1, op2, op3, op4);
 
     // exit if no fitting instruction is found
     if(idx<0) {
@@ -537,7 +538,8 @@ int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2,
 
     // if the first two operands are a Register&RM pair make sure RM
     // is in operand 1
-    if((OP_TYPE(instructions[idx].operand1) == OP_REG) && (OP_TYPE(instructions[idx].operand2) == OP_RM)) {
+    if( (OP_TYPE(instructions[idx].operand1) == OP_REG) &&
+        (OP_TYPE(instructions[idx].operand2) == OP_RM || OP_TYPE(instructions[idx].operand2) == OP_MEM)) {
         opspec_t tmp = op1; op1 = op2; op2 = tmp;
     }
 
@@ -546,11 +548,6 @@ int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2,
 
     // write out any mandatory prefixes included in the opcode
     if(!plasm_put_mandatory_prefixes(as, &opcode)) return 0;
-
-    // 16bit operand size override
-    if(OP_WIDTH(op1.type)==OP_BIT16 || OP_WIDTH(op2.type)==OP_BIT16) {
-        if(!plasm_put_byte(as, 0x66u)) return 0;
-    }
 
     // address size override prefix (0x67)
     if(OP_TYPE(op1.type)==OP_MEM && op1.data.memory.size_override) {
@@ -563,10 +560,6 @@ int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2,
     if((opcode&0xF0u) == 0x40u) {
         rex = opcode&0xFFu;
         opcode >>= 8u;
-    }
-    // 64bit operand size override
-    if(instructions[idx].norex!=NO_REX && (OP_WIDTH(op1.type)==OP_BIT64 || OP_WIDTH(op2.type)==OP_BIT64)) {
-        rex |= 0x08u;
     }
     // rex flags from operands
     rex |= calc_modrm_modrm_rex(op1) | calc_modrm_reg_rex(op2);

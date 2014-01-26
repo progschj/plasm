@@ -212,9 +212,9 @@ int plasm_put_dword(plasm *as, uint32_t value);
 int plasm_put_qword(plasm *as, uint64_t value);
 
 // encode and insert instruction
-int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2, opspec_t op3, ...);
+int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2, opspec_t op3, opspec_t op4, ...);
 
 // syntactic sugar
-#define plasm_put_op(...) plasm_put_op_fun(__VA_ARGS__,REGISTER_OP(0),REGISTER_OP(0),REGISTER_OP(0))
+#define plasm_put_op(...) plasm_put_op_fun(__VA_ARGS__,REGISTER_OP(0),REGISTER_OP(0),REGISTER_OP(0),REGISTER_OP(0))
 
 #endif
