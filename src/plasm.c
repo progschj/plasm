@@ -86,6 +86,12 @@ opspec_t REGISTER_OP(optype_t type) {
 #define OP_TYPE_WIDTH(op) (op & 63ull)
 #define REGISTER_INDEX(op) (op >> 16ull)
 #define IS_EXACT(op) (op & EXACT_FLAG)
+#define IS_REG(op) (OP_TYPE(op) == OP_REG)
+#define IS_MEM(op) (OP_TYPE(op) == OP_MEM)
+#define IS_RM(op) (OP_TYPE(op) == OP_RM)
+#define IS_IMM(op) (OP_TYPE(op) == OP_IMM)
+#define IS_RM_M(op) (IS_RM(op) || IS_MEM(op))
+
 #define NO_REX 0xFFu
 
 static opspec_t MEM_IDX_impl(optype_t type, uint8_t scale, optype_t index, optype_t base, int32_t disp) {
@@ -234,6 +240,9 @@ opspec_t DISP64(int32_t disp) {
 opspec_t DISP128(int32_t disp) {
     return DISP(OP_MEM128, disp);
 }
+opspec_t DISP256(int32_t disp) {
+    return DISP(OP_MEM256, disp);
+}
 
 // memory access:
 //      displacement
@@ -251,6 +260,9 @@ opspec_t DISP_RIP64(int32_t disp) {
 }
 opspec_t DISP_RIP128(int32_t disp) {
     return DISP_RIP(OP_MEM128, disp);
+}
+opspec_t DISP_RIP256(int32_t disp) {
+    return DISP_RIP(OP_MEM256, disp);
 }
 
 
@@ -271,6 +283,9 @@ opspec_t MEM64(opspec_t reg, int32_t disp) {
 opspec_t MEM128(opspec_t reg, int32_t disp) {
     return MEM(OP_MEM128, reg, disp);
 }
+opspec_t MEM256(opspec_t reg, int32_t disp) {
+    return MEM(OP_MEM256, reg, disp);
+}
 
 // index memory access (SIB) valid scaler values are 1,2,4 and 8
 // address is calculated as:
@@ -289,6 +304,9 @@ opspec_t MEM_IDX64(uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
 }
 opspec_t MEM_IDX128(uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
     return MEM_IDX(OP_MEM128, scale, index, base, disp);
+}
+opspec_t MEM_IDX256(uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
+    return MEM_IDX(OP_MEM256, scale, index, base, disp);
 }
 
 // immediate operands
@@ -362,6 +380,21 @@ static uint8_t calc_modrm_reg_rex(opspec_t op) {
         return 0u;
     }
     return (REGISTER_INDEX(op.type)&8u)>>1u;
+}
+
+// 2 byte vex
+static uint32_t calc_vex2(uint8_t rex, opspec_t op3) {
+    uint8_t REX_RXB = rex&7u;
+    uint8_t REX_W = (rex&8u)>>3u;
+    uint8_t vex1 = (REX_RXB^7u)<<5u;
+    uint8_t vex2 = (REX_W<<7u) | ((REGISTER_INDEX(op3.type)^0xFu)<<3u);
+    return (vex2<<8u) | vex1;
+}
+// 1 byte vex
+static uint8_t calc_vex1(uint8_t rex, opspec_t op3) {
+    uint8_t REX_R = (rex&4u)>>2u;
+    uint8_t vex1 = ((REX_R^1u)<<7u) | ((REGISTER_INDEX(op3.type)^0xFu)<<3u);
+    return vex1;
 }
 
 // operand type comparison functions
@@ -515,6 +548,8 @@ static int plasm_put_opcode(plasm *as, optype_t opcode, optype_t addition) {
         if((opcode&0xFFu) == 0x0Fu || (opcode&0xFFu) == 0x38u || (opcode&0xFFu) == 0x3Au) {
             if(!plasm_put_byte(as, opcode)) return 0;
             opcode>>=8u;
+        } else if(opcode == 0u) {
+            return 1;
         }
     }
     // some opcodes seem to be multibyte despite escape bytes?
@@ -535,11 +570,17 @@ int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2,
         return 0;
     }
 
-    // if the first two operands are a Register&RM pair make sure RM
-    // is in operand 1
-    if( (OP_TYPE(instructions[idx].operand1) == OP_REG) &&
-        (OP_TYPE(instructions[idx].operand2) == OP_RM || OP_TYPE(instructions[idx].operand2) == OP_MEM)) {
+    // reorder operands so RM arguments are in op1
+    if(IS_REG(instructions[idx].operand1) && IS_RM_M(instructions[idx].operand2)) {
         opspec_t tmp = op1; op1 = op2; op2 = tmp;
+    } else if(IS_REG(instructions[idx].operand1) && IS_RM_M(instructions[idx].operand3)) {
+        opspec_t tmp = op1; op1 = op3; op3 = op2; op2 = tmp;
+    } else if(IS_REG(instructions[idx].operand3) && IS_RM_M(instructions[idx].operand4)) {
+        opspec_t tmp = op1; op1 = op4; op4 = op3; op3 = op2; op2 = tmp;
+    } else if(IS_REG(instructions[idx].operand1) && IS_REG(instructions[idx].operand2) &&
+              IS_IMM(instructions[idx].operand3) && instructions[idx].modrm != 'r') {
+        // vex shift operations that put dest into the vex prefix
+        opspec_t tmp = op1; op1 = op2; op2 = op3; op3 = tmp;
     }
 
     // obtain opcode
@@ -563,14 +604,38 @@ int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2,
     // rex flags from operands
     rex |= calc_modrm_modrm_rex(op1) | calc_modrm_reg_rex(op2);
 
-    // if any of the rex bits have been set, emit the rex prefix
+    if((opcode&0xFFu) == 0xC4u) { // vex instruction
+        // check if 2 byte vex possible
+        if((rex&0xBu) == 0u && (opcode&0x801F00u) == 0x000100u) {
+            if(!plasm_put_byte(as, 0xC5)) return 0;
+            opcode >>= 16u;
+            if(OP_TYPE(op3.type) == OP_REG) {
+                opcode |= calc_vex1(rex, op3);
+            } else {
+                opcode |= calc_vex1(rex, REGISTER_OP(0));
+            }
+            if(!plasm_put_byte(as, opcode)) return 0;
+            opcode >>= 8u;
+        } else { // use 3 byte otherwise
+            if(!plasm_put_byte(as, opcode)) return 0;
+            opcode >>= 8u;
+            if(OP_TYPE(op3.type) == OP_REG) {
+                opcode |= calc_vex2(rex, op3);
+            } else {
+                opcode |= calc_vex2(rex, REGISTER_OP(0));
+            }
 
-    if(rex) {
+            if(!plasm_put_byte(as, opcode)) return 0;
+            opcode >>= 8u;
+            if(!plasm_put_byte(as, opcode)) return 0;
+            opcode >>= 8u;
+        }
+    } else if(rex) { // emit rex prefix if any bits are set
         if(!plasm_put_byte(as, 0x40u | rex)) return 0;
     }
 
     switch(instructions[idx].modrm) {
-        // ModRM encoded operand
+        // ModRM encoded operands
         case 'r':
             if(!plasm_put_opcode(as, opcode, 0)) return 0;
             if(!plasm_put_byte(as, calc_modrm_modrm(op1) | calc_modrm_reg(op2))) return 0;
@@ -591,6 +656,10 @@ int plasm_put_op_fun(plasm *as, mnemonic_t mnemonic, opspec_t op1, opspec_t op2,
         case ' ':
             if(!plasm_put_opcode(as, opcode, 0)) return 0;
             break;
+    }
+
+    if(OP_TYPE(op4.type) == OP_REG) {
+        if(!plasm_put_byte(as, REGISTER_INDEX(op4.type)<<4u)) return 0;
     }
 
     //write immediate/moffset/reloff values if present

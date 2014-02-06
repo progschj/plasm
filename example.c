@@ -37,7 +37,7 @@ int main(void) {
     FILE *fp = fopen("out.bin", "wb");
     fwrite(as.buffer, 1, as.position, fp);
     fclose(fp);
-    if(system("ndisasm -b 64 out.bin")) {
+    if(system("objdump -D -b binary -m i386:x86-64 out.bin")) {
         printf("system returned != 0\n");
     }
 
