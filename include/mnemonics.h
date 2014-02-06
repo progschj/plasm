@@ -831,10 +831,7 @@ typedef enum mnemonic_enum_t {
     VPERM2F128,
     VPERM2I128,
     VPERMD,
-/*
-    VPERMIL2PD,
-    VPERMIL2PS,
-*/
+
     VPERMILPD,
     VPERMILPS,
     VPERMPD,
