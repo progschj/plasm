@@ -812,10 +812,12 @@ typedef enum mnemonic_enum_t {
     VFNMSUB132SS,
     VFNMSUB213SS,
     VFNMSUB231SS,
-/*
-    VGATHERPD,
-    VGATHERPS,
-*/
+
+    VGATHERDPD,
+    VGATHERDPS,
+    VGATHERQPD,
+    VGATHERQPS,
+
     VINSERTF128,
     VINSERTI128,
 
@@ -838,12 +840,11 @@ typedef enum mnemonic_enum_t {
     VPERMPD,
     VPERMPS,
     VPERMQ,
-/*
+
     VPGATHERDD,
     VPGATHERDQ,
     VPGATHERQD,
     VPGATHERQQ,
-*/
 
     VPMASKMOVD,
     VPMASKMOVQ,

@@ -101,7 +101,7 @@ static opspec_t MEM_IDX_impl(optype_t type, uint8_t scale, optype_t index, optyp
     scale = ((scale&10u)?1u:0u)+((scale&12u)?2u:0u);
 
     result.type = type;
-    result.data.memory.size_override = OP_WIDTH(index)==OP_BIT32?0x67u:0x00;
+    result.data.memory.size_override = OP_WIDTH(base)==OP_BIT32?0x67u:0x00;
     result.data.memory.rex = (regidx&8u) >> 2u | (regbase&8u) >> 3u;
     result.data.memory.modrm = 0x04;
 
