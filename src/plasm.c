@@ -14,13 +14,13 @@ int instruction_support[MAX_MNEMONIC] = {INT_MAX};
 
 static void prepare_instructions();
 
-void plasm_init(plasm *as, size_t size) {
+void plasm_init(plasm *as, uint8_t *buffer, size_t size) {
     if(instruction_support[0] == INT_MAX) {
         prepare_instructions();
     }
     as->size = size;
     as->position = 0;
-    as->buffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    as->buffer = buffer==NULL?mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0):buffer;
 }
 
 void plasm_protect(plasm *as, int protect) {
@@ -119,11 +119,11 @@ static opspec_t MEM_IDX_impl(optype_t type, uint8_t scale, optype_t index, optyp
     return result;
 }
 
-opspec_t MEM_IDX(optype_t type, uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
+opspec_t MEM_IDX0(optype_t type, uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
     return MEM_IDX_impl(type, scale, index.type, base.type, disp);
 }
 
-opspec_t MEM(optype_t type, opspec_t reg, int32_t disp) {
+opspec_t MEM0(optype_t type, opspec_t reg, int32_t disp) {
     opspec_t result;
     optype_t regidx = REGISTER_INDEX(reg.type);
     if(regidx == 4u) {
@@ -153,7 +153,7 @@ opspec_t MEM(optype_t type, opspec_t reg, int32_t disp) {
 }
 
 // displacement only adressing for memory operands
-opspec_t DISP(optype_t type, int32_t disp) {
+opspec_t DISP0(optype_t type, int32_t disp) {
     opspec_t result;
     result.type = type;
     result.data.memory.size_override = 0;
@@ -166,7 +166,7 @@ opspec_t DISP(optype_t type, int32_t disp) {
 }
 
 // RIP (relative) adressing for memory operands
-opspec_t DISP_RIP(optype_t type, int32_t disp) {
+opspec_t DISP_RIP0(optype_t type, int32_t disp) {
     opspec_t result;
     result.type = type;
     result.data.memory.size_override = 0;
@@ -176,6 +176,19 @@ opspec_t DISP_RIP(optype_t type, int32_t disp) {
     result.data.memory.disp.disp32 = disp;
     result.position = NULL;
     return result;
+}
+
+opspec_t MEM_IDX(uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
+    return MEM_IDX0(OP_MEM_ANY, scale, index, base, disp);
+}
+opspec_t MEM(opspec_t reg, int32_t disp) {
+    return MEM0(OP_MEM_ANY, reg, disp);
+}
+opspec_t DISP(int32_t disp) {
+    return DISP0(OP_MEM_ANY, disp);
+}
+opspec_t DISP_RIP(int32_t disp) {
+    return DISP_RIP0(OP_MEM_ANY, disp);
 }
 
 static opspec_t MOFF(optype_t type, uint64_t offset) {
@@ -221,92 +234,6 @@ opspec_t MOFF32(uint64_t offset) {
 }
 opspec_t MOFF64(uint64_t offset) {
     return MOFF(OP_MOFFSET64, offset);
-}
-
-// memory access:
-//      displacement
-opspec_t DISP8(int32_t disp) {
-    return DISP(OP_MEM8, disp);
-}
-opspec_t DISP16(int32_t disp) {
-    return DISP(OP_MEM16, disp);
-}
-opspec_t DISP32(int32_t disp) {
-    return DISP(OP_MEM32, disp);
-}
-opspec_t DISP64(int32_t disp) {
-    return DISP(OP_MEM64, disp);
-}
-opspec_t DISP128(int32_t disp) {
-    return DISP(OP_MEM128, disp);
-}
-opspec_t DISP256(int32_t disp) {
-    return DISP(OP_MEM256, disp);
-}
-
-// memory access:
-//      displacement
-opspec_t DISP_RIP8(int32_t disp) {
-    return DISP_RIP(OP_MEM8, disp);
-}
-opspec_t DISP_RIP16(int32_t disp) {
-    return DISP_RIP(OP_MEM16, disp);
-}
-opspec_t DISP_RIP32(int32_t disp) {
-    return DISP_RIP(OP_MEM32, disp);
-}
-opspec_t DISP_RIP64(int32_t disp) {
-    return DISP_RIP(OP_MEM64, disp);
-}
-opspec_t DISP_RIP128(int32_t disp) {
-    return DISP_RIP(OP_MEM128, disp);
-}
-opspec_t DISP_RIP256(int32_t disp) {
-    return DISP_RIP(OP_MEM256, disp);
-}
-
-
-// memory access:
-//      register + displacement
-opspec_t MEM8(opspec_t reg, int32_t disp) {
-    return MEM(OP_MEM8, reg, disp);
-}
-opspec_t MEM16(opspec_t reg, int32_t disp) {
-    return MEM(OP_MEM16, reg, disp);
-}
-opspec_t MEM32(opspec_t reg, int32_t disp) {
-    return MEM(OP_MEM32, reg, disp);
-}
-opspec_t MEM64(opspec_t reg, int32_t disp) {
-    return MEM(OP_MEM64, reg, disp);
-}
-opspec_t MEM128(opspec_t reg, int32_t disp) {
-    return MEM(OP_MEM128, reg, disp);
-}
-opspec_t MEM256(opspec_t reg, int32_t disp) {
-    return MEM(OP_MEM256, reg, disp);
-}
-
-// index memory access (SIB) valid scaler values are 1,2,4 and 8
-// address is calculated as:
-//      scaler*index_register + base_register + displacement
-opspec_t MEM_IDX8(uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
-    return MEM_IDX(OP_MEM8, scale, index, base, disp);
-}
-opspec_t MEM_IDX16(uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
-    return MEM_IDX(OP_MEM16, scale, index, base, disp);
-}
-opspec_t MEM_IDX32(uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
-    return MEM_IDX(OP_MEM32, scale, index, base, disp);
-}
-opspec_t MEM_IDX64(uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
-    return MEM_IDX(OP_MEM64, scale, index, base, disp);
-}
-opspec_t MEM_IDX128(uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
-    return MEM_IDX(OP_MEM128, scale, index, base, disp);
-}
-opspec_t MEM_IDX256(uint8_t scale, opspec_t index, opspec_t base, int32_t disp) {
-    return MEM_IDX(OP_MEM256, scale, index, base, disp);
 }
 
 // immediate operands
@@ -399,7 +326,7 @@ static uint8_t calc_vex1(uint8_t rex, opspec_t op3) {
 
 // operand type comparison functions
 static int type_width_match(optype_t a, optype_t b) {
-    if(OP_WIDTH(a) != OP_WIDTH(b)) {
+    if(OP_WIDTH(a) && OP_WIDTH(b) && OP_WIDTH(a) != OP_WIDTH(b)) {
         return 0;
     }
     if((a & OP_IMM) || (b & OP_IMM)) {

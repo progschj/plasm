@@ -44,9 +44,9 @@ typedef struct {
 #define OP_IMM     0x04ull
 #define OP_MOFFSET 0x05ull
 #define OP_RELOFF  0x06ull
-#define OP_RELOFF  0x06ull
 
 // width 3 bits
+#define OP_BIT_ANY (0x00ull<<3ull)
 #define OP_BIT8    (0x01ull<<3ull)
 #define OP_BIT16   (0x02ull<<3ull)
 #define OP_BIT32   (0x03ull<<3ull)
@@ -55,31 +55,32 @@ typedef struct {
 #define OP_BIT256  (0x06ull<<3ull)
 
 // operand type definitions
-#define OP_REG8   (OP_REG | OP_BIT8)
-#define OP_REG16  (OP_REG | OP_BIT16)
-#define OP_REG32  (OP_REG | OP_BIT32)
-#define OP_REG64  (OP_REG | OP_BIT64)
-#define OP_XMM0   (OP_REG | OP_BIT128)
-#define OP_YMM0   (OP_REG | OP_BIT256)
+#define OP_REG8     (OP_REG | OP_BIT8)
+#define OP_REG16    (OP_REG | OP_BIT16)
+#define OP_REG32    (OP_REG | OP_BIT32)
+#define OP_REG64    (OP_REG | OP_BIT64)
+#define OP_XMM0     (OP_REG | OP_BIT128)
+#define OP_YMM0     (OP_REG | OP_BIT256)
 
-#define OP_MEM8   (OP_MEM | OP_BIT8)
-#define OP_MEM16  (OP_MEM | OP_BIT16)
-#define OP_MEM32  (OP_MEM | OP_BIT32)
-#define OP_MEM64  (OP_MEM | OP_BIT64)
-#define OP_MEM128 (OP_MEM | OP_BIT128)
-#define OP_MEM256 (OP_MEM | OP_BIT256)
+#define OP_MEM_ANY  (OP_MEM | OP_BIT_ANY)
+#define OP_MEM8     (OP_MEM | OP_BIT8)
+#define OP_MEM16    (OP_MEM | OP_BIT16)
+#define OP_MEM32    (OP_MEM | OP_BIT32)
+#define OP_MEM64    (OP_MEM | OP_BIT64)
+#define OP_MEM128   (OP_MEM | OP_BIT128)
+#define OP_MEM256   (OP_MEM | OP_BIT256)
 
-#define OP_RM8    (OP_RM  | OP_BIT8)
-#define OP_RM16   (OP_RM  | OP_BIT16)
-#define OP_RM32   (OP_RM  | OP_BIT32)
-#define OP_RM64   (OP_RM  | OP_BIT64)
-#define OP_RM128  (OP_RM  | OP_BIT128)
-#define OP_RM256  (OP_RM  | OP_BIT256)
+#define OP_RM8      (OP_RM  | OP_BIT8)
+#define OP_RM16     (OP_RM  | OP_BIT16)
+#define OP_RM32     (OP_RM  | OP_BIT32)
+#define OP_RM64     (OP_RM  | OP_BIT64)
+#define OP_RM128    (OP_RM  | OP_BIT128)
+#define OP_RM256    (OP_RM  | OP_BIT256)
 
-#define OP_IMM8   (OP_IMM | OP_BIT8)
-#define OP_IMM16  (OP_IMM | OP_BIT16)
-#define OP_IMM32  (OP_IMM | OP_BIT32)
-#define OP_IMM64  (OP_IMM | OP_BIT64)
+#define OP_IMM8     (OP_IMM | OP_BIT8)
+#define OP_IMM16    (OP_IMM | OP_BIT16)
+#define OP_IMM32    (OP_IMM | OP_BIT32)
+#define OP_IMM64    (OP_IMM | OP_BIT64)
 
 #define OP_MOFFSET8   (OP_MOFFSET | OP_BIT8)
 #define OP_MOFFSET16  (OP_MOFFSET | OP_BIT16)
@@ -138,44 +139,11 @@ opspec_t REGISTER_OP(optype_t type);
 #define BRANCH_NOT_TAKEN 0x2Eu
 #define BRANCH_TAKEN 0x3Eu
 
-// generic memory operands (first argument has to be one of OP_MEMn)
-opspec_t MEM_IDX(optype_t type, uint8_t scale, opspec_t index, opspec_t base, int32_t disp);
-opspec_t MEM(optype_t type, opspec_t reg, int32_t disp);
-opspec_t DISP(optype_t type, int32_t disp);
-opspec_t DISP_RIP(optype_t type, int32_t disp);
-
-// absolute displacement memory operands
-opspec_t DISP8(int32_t disp);
-opspec_t DISP16(int32_t disp);
-opspec_t DISP32(int32_t disp);
-opspec_t DISP64(int32_t disp);
-opspec_t DISP128(int32_t disp);
-opspec_t DISP256(int32_t disp);
-
-// RIP relative displacement memory operands
-opspec_t DISP_RIP8(int32_t disp);
-opspec_t DISP_RIP16(int32_t disp);
-opspec_t DISP_RIP32(int32_t disp);
-opspec_t DISP_RIP64(int32_t disp);
-opspec_t DISP_RIP128(int32_t disp);
-opspec_t DISP_RIP256(int32_t disp);
-
-// register + displacement memory operands
-opspec_t MEM8(opspec_t reg, int32_t disp);
-opspec_t MEM16(opspec_t reg, int32_t disp);
-opspec_t MEM32(opspec_t reg, int32_t disp);
-opspec_t MEM64(opspec_t reg, int32_t disp);
-opspec_t MEM128(opspec_t reg, int32_t disp);
-opspec_t MEM256(opspec_t reg, int32_t disp);
-
-// indexed memory operands (scale*index + base + disp)
-// valid scale values are 1,2,4,8
-opspec_t MEM_IDX8(uint8_t scale, opspec_t index, opspec_t base, int32_t disp);
-opspec_t MEM_IDX16(uint8_t scale, opspec_t index, opspec_t base, int32_t disp);
-opspec_t MEM_IDX32(uint8_t scale, opspec_t index, opspec_t base, int32_t disp);
-opspec_t MEM_IDX64(uint8_t scale, opspec_t index, opspec_t base, int32_t disp);
-opspec_t MEM_IDX128(uint8_t scale, opspec_t index, opspec_t base, int32_t disp);
-opspec_t MEM_IDX256(uint8_t scale, opspec_t index, opspec_t base, int32_t disp);
+// generic memory operands
+opspec_t MEM_IDX(uint8_t scale, opspec_t index, opspec_t base, int32_t disp);
+opspec_t MEM(opspec_t reg, int32_t disp);
+opspec_t DISP(int32_t disp);
+opspec_t DISP_RIP(int32_t disp);
 
 // immediate operands
 opspec_t IMM8(uint8_t value);
@@ -197,8 +165,11 @@ opspec_t MOFF64(uint64_t offset);
 // stores a pointer to a immediate value in the pointer pointed to by ptr
 opspec_t VALUE_PTR(opspec_t op, void *ptr);
 
-// init and allocate a instruction buffer
-void plasm_init(plasm *as, size_t size);
+// init an instruction buffer. If buffer is NULL a buffer of
+// size is allocated via mmap otherwise the provided buffer is used
+// (in which case using plasm_protect and plasm_free is most likely
+// unsafe)
+void plasm_init(plasm *as, uint8_t *buffer, size_t size);
 
 // protect = 0 buffer is writable but not executable
 // protect = 1 buffer is executable but not writable

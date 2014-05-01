@@ -7,7 +7,7 @@
 int main(void) {
     // init assembler with space for up to 4096 bytes
     plasm as;
-    plasm_init(&as, 4096);
+    plasm_init(&as, NULL, 4096);
 
     // remember starting address of the function
     int (*func)() = (int(*)())plasm_get_current_ptr(&as);

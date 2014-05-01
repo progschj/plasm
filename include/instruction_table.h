@@ -1394,15 +1394,14 @@ static opcode_info instructions[] = {
     {VMOVSD, OP_MEM64, OP_XMM0, 0, 0, 0x117B01C4u, 'r'},
     {VMOVSD, OP_XMM0, OP_XMM0, OP_XMM0, 0, 0x100301C4u, 'r'},
 
-
     {VMOVSHDUP, OP_XMM0, OP_RM128, 0, 0, 0x167A01C4u, 'r'},
     {VMOVSHDUP, OP_YMM0, OP_RM256, 0, 0, 0x167E01C4u, 'r'},
 
     {VMOVSLDUP, OP_XMM0, OP_RM128, 0, 0, 0x127A01C4u, 'r'},
     {VMOVSLDUP, OP_YMM0, OP_RM256, 0, 0, 0x127E01C4u, 'r'},
 
-    {VMOVSS, OP_XMM0, OP_MEM64, 0, 0, 0x107A01C4u, 'r'},
-    {VMOVSS, OP_MEM64, OP_XMM0, 0, 0, 0x117A01C4u, 'r'},
+    {VMOVSS, OP_XMM0, OP_MEM32, 0, 0, 0x107A01C4u, 'r'},
+    {VMOVSS, OP_MEM32, OP_XMM0, 0, 0, 0x117A01C4u, 'r'},
     {VMOVSS, OP_XMM0, OP_XMM0, OP_XMM0, 0, 0x100201C4u, 'r'},
 
     {VMOVUPD, OP_XMM0, OP_RM128, 0, 0, 0x107901C4u, 'r'},
@@ -2116,5 +2115,5 @@ static opcode_info instructions[] = {
     {VZEROALL, 0, 0, 0, 0, 0x777C01C4u, ' '},
     {VZEROUPPER, 0, 0, 0, 0, 0x777801C4u, ' '},
 
-    {UNKNOWN, 0, 0, 0, 0, ' '},
+    {UNKNOWN, 0, 0, 0, 0, 0, ' '},
 };
