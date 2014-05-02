@@ -95,12 +95,12 @@ typedef struct {
 opspec_t REGISTER_OP(optype_t type);
 
 // register definitions (b = byte, w = word, d = doubleword, q = quadword)
-#define Rb(i)  REGISTER_OP(OP_REG8  | i<<16ull)
-#define Rw(i)  REGISTER_OP(OP_REG16 | i<<16ull)
-#define Rd(i)  REGISTER_OP(OP_REG32 | i<<16ull)
-#define Rq(i)  REGISTER_OP(OP_REG64 | i<<16ull)
-#define XMM(i) REGISTER_OP(OP_XMM0 | i<<16ull)
-#define YMM(i) REGISTER_OP(OP_YMM0 | i<<16ull)
+#define Rb(i)  REGISTER_OP(OP_REG8  | (i)<<16ull)
+#define Rw(i)  REGISTER_OP(OP_REG16 | (i)<<16ull)
+#define Rd(i)  REGISTER_OP(OP_REG32 | (i)<<16ull)
+#define Rq(i)  REGISTER_OP(OP_REG64 | (i)<<16ull)
+#define XMM(i) REGISTER_OP(OP_XMM0  | (i)<<16ull)
+#define YMM(i) REGISTER_OP(OP_YMM0  | (i)<<16ull)
 
 #define RAX REGISTER_OP(OP_REG64 | 0x00ull<<16ull)
 #define RCX REGISTER_OP(OP_REG64 | 0x01ull<<16ull)
