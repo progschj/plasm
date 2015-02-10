@@ -993,7 +993,7 @@ static opcode_info instructions[] = {
     {MOVLPS, OP_MEM64, OP_XMM0, 0, 0, 0x130F, 'r'},
 
     {MOVNTDQ, OP_MEM128, OP_XMM0, 0, 0, 0xE70F66, 'r'},
-    {MOVNTDQA, OP_MEM128, OP_XMM0, 0, 0, 0x2A380F66u, 'r'},
+    {MOVNTDQA, OP_XMM0, OP_MEM128, 0, 0, 0x2A380F66u, 'r'},
     {MOVNTPD, OP_MEM128, OP_XMM0, 0, 0, 0x2B0F66, 'r'},
     {MOVNTPS, OP_MEM128, OP_XMM0, 0, 0, 0x2B0F, 'r'},
     {MOVNTSD, OP_MEM128, OP_XMM0, 0, 0, 0x2B0FF2, 'r'},
@@ -1379,8 +1379,8 @@ static opcode_info instructions[] = {
 
     {VMOVNTDQ, OP_MEM128, OP_XMM0, 0, 0, 0xE77901C4u, 'r'},
     {VMOVNTDQ, OP_MEM256, OP_YMM0, 0, 0, 0xE77D01C4u, 'r'},
-    {VMOVNTDQA, OP_MEM128, OP_XMM0, 0, 0, 0x2A7902C4u, 'r'},
-    {VMOVNTDQA, OP_MEM256, OP_YMM0, 0, 0, 0x2A7D02C4u, 'r'},
+    {VMOVNTDQA, OP_XMM0, OP_MEM128, 0, 0, 0x2A7902C4u, 'r'},
+    {VMOVNTDQA, OP_YMM0, OP_MEM256, 0, 0, 0x2A7D02C4u, 'r'},
 
     {VMOVNTPD, OP_MEM128, OP_XMM0, 0, 0, 0x2B7901C4u, 'r'},
     {VMOVNTPD, OP_MEM256, OP_YMM0, 0, 0, 0x2B7D01C4u, 'r'},
